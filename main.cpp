@@ -193,137 +193,109 @@ float dist(Vector2 v1,Vector2 v2){
 
 
 
-#include <random>
-
-std::vector<std::vector<Vector2>> GenerateRandomPolygons(int count, float minSize, float maxSize, float screenWidth, float screenHeight, float minDistance) {
-    std::vector<std::vector<Vector2>> polygons;
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<float> positionDistX(minSize, screenWidth - maxSize);
-    std::uniform_real_distribution<float> positionDistY(minSize, screenHeight - maxSize);
-    std::uniform_real_distribution<float> sizeDist(minSize, maxSize);
-    std::uniform_int_distribution<int> vertexCountDist(3, 6); // 3 to 6 vertices per polygon
-
-    for (int i = 0; i < count; ++i) {
-        bool validPolygon = false;
-        std::vector<Vector2> polygon;
-
-        while (!validPolygon) {
-            // Generate random center and size
-            float centerX = positionDistX(rng);
-            float centerY = positionDistY(rng);
-            float radius = sizeDist(rng);
-            int vertexCount = vertexCountDist(rng);
-
-            // Create polygon vertices (regular polygon with small randomness for variation)
-            polygon.clear();
-            for (int j = 0; j < vertexCount; ++j) {
-                float angle = (2.0f * PI * j) / vertexCount;
-                float offsetX = radius * cosf(angle) * (0.8f + 0.4f * (rng() / float(rng.max()))); // Add slight randomization
-                float offsetY = radius * sinf(angle) * (0.8f + 0.4f * (rng() / float(rng.max())));
-                polygon.push_back({centerX + offsetX, centerY + offsetY});
-            }
-
-            // Check if this polygon overlaps with existing polygons
-            validPolygon = true;
-            for (const auto& existingPolygon : polygons) {
-                for (const auto& vertex : polygon) {
-                    for (const auto& existingVertex : existingPolygon) {
-                        if (Vector2Distance(vertex, existingVertex) < minDistance) {
-                            validPolygon = false;
-                            break;
-                        }
-                    }
-                    if (!validPolygon) break;
-                }
-                if (!validPolygon) break;
-            }
-        }
-
-        // Add valid polygon to the list
-        polygons.push_back(polygon);
-    }
-
-    return polygons;
-}
-
 int main() {
+    //Logger logger(10, {10, 10}, 20, 5, BLACK);
+
+
     InitWindow(screenWidth, screenHeight, "2D Rope Debugging Visualization");
 
     Vector2 anchor = {(float)screenWidth / 2, (float)screenHeight / 2};
     Vector2 oldPos = anchor;
     std::vector<Vector2> curPoints = {anchor, anchor + Vector2{0,10}};
-    
-    // Generate a lot of random polygons
-    std::vector<std::vector<Vector2>> polygons = GenerateRandomPolygons(20, 30.0f, 80.0f, screenWidth, screenHeight, 20.0f);
 
-    float zoom = 1.0f;  // Default zoom (1.0 is normal scale)
-    bool updateCurPoints = true;  // Flag to control whether to update the rope points
+    // Define polygons
+    std::vector<std::vector<Vector2>> polygons = {
+        {{200.0f, 150.0f}, {300.0f, 100.0f}, {400.0f, 150.0f}, {350.0f, 250.0f}, {250.0f, 250.0f}},
+        {{500.0f, 300.0f}, {600.0f, 350.0f}, {550.0f, 450.0f}, {450.0f, 400.0f}}
+    };
 
     SetTargetFPS(60);
     Vector2 cursorPos;
     Vector2 newPos;
 
-    while (!WindowShouldClose()) {
-        // Clear logger for fresh logs
-        logger.ClearEphemeralLogs();
-        
-        // Handle zooming with mouse wheel (trackpad gesture equivalent)
-        float zoomChange = GetMouseWheelMove();  // Positive value for zoom in, negative for zoom out
-        if (zoomChange != 0.0f) {
-            zoom += zoomChange * 0.1f;  // Adjust zoom speed
-            zoom = std::max(0.1f, zoom); // Prevent zooming out too much
-        }
-
-        if (IsKeyPressed(KEY_P)) {
-            updateCurPoints = !updateCurPoints;  // Toggle the update status
-        }
-
-        if (updateCurPoints) {
+while (!WindowShouldClose()) {
+    logger.ClearEphemeralLogs();
+    // Process the rope
+     if (false||IsKeyPressed(KEY_SPACE)) {
+            //logger.AddLog("Space key pressed!");  
             oldPos = curPoints.back();
             anchor = curPoints[curPoints.size() - 2];    
             newPos = GetMousePosition();
-            Vector2 zoomedCursorPos = Vector2Scale(newPos, 1.0f / zoom);  // Scale mouse position by zoom
-            curPoints[curPoints.size()-1] = zoomedCursorPos;
 
-            if (curPoints.size() >= 3) {
-                Vector2 preAnchor = curPoints[curPoints.size() - 3];
-                Vector2 preAnchorLine = (anchor - preAnchor);
-                Vector2 toOldPos = (oldPos - anchor);
-                Vector2 toNewPos = (newPos - anchor);
+            curPoints[curPoints.size()-1]=newPos;
 
-                if (!AreVectorsParallel(preAnchorLine, toNewPos)) {
-                    curPoints = Process(curPoints, anchor, oldPos, newPos, polygons);
-                }
-            } else {
-                curPoints = Process(curPoints, anchor, oldPos, newPos, polygons);
-            }
+
+
+                // Process the rope logic as before
+    if (curPoints.size() >= 3) {
+        Vector2 preAnchor = curPoints[curPoints.size() - 3];
+        Vector2 preAnchorLine = (anchor - preAnchor);
+        Vector2 toOldPos = (oldPos - anchor);
+        Vector2 toNewPos = (newPos - anchor);
+
+        if (!AreVectorsParallel(preAnchorLine, toNewPos)) {
+            curPoints = Process(curPoints, anchor, oldPos, newPos, polygons);
+            //oldPos = cursorPos;
         }
-
-        if (IsKeyPressed(KEY_C)) {
-            logger.ClearAllLogs();
-        }
-
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-
-        // Draw polygons with zoom effect
-        for (auto& polygon : polygons) {
-            for (size_t i = 0; i < polygon.size(); i++) {
-                Vector2 p1 = Vector2Scale(polygon[i], zoom);
-                Vector2 p2 = Vector2Scale(polygon[(i + 1) % polygon.size()], zoom);
-                DrawLineV(p1, p2, BLACK);
-            }
-        }
-
-        // Draw rope
-        for (size_t i = 1; i < curPoints.size(); i++) {
-            Vector2 prevPoint = Vector2Scale(curPoints[i - 1], zoom);
-            Vector2 currPoint = Vector2Scale(curPoints[i], zoom);
-            DrawLineV(prevPoint, currPoint, BLUE);
-        }
-
-        EndDrawing();
+    } else {
+        curPoints = Process(curPoints, anchor, oldPos, newPos, polygons);
+        //oldPos = cursorPos;
     }
+
+            
+        }
+    
+        if (IsKeyPressed(KEY_C)) {
+            logger.ClearAllLogs(); // Clear all logs when 'C' is pressed
+        }
+
+  
+
+
+
+// Logging using debugText
+    logger.AddLog("Anchor: (" + std::to_string(anchor.x) + ", " + std::to_string(anchor.y) + ")");
+    logger.AddLog("OldPos: (" + std::to_string(oldPos.x) + ", " + std::to_string(oldPos.y) + ")");
+    logger.AddLog("NewPos: (" + std::to_string(newPos.x) + ", " + std::to_string(newPos.y) + ")");
+    logger.AddLog("OldToNew: (" + std::to_string((newPos-oldPos).x) + ", " + std::to_string((newPos-oldPos).y) + ")");
+    logger.AddLog("MousePos: (" + std::to_string(GetMousePosition().x) + ", " + std::to_string(GetMousePosition().y) + ")");
+
+    logger.AddLog("Rope Points: " + std::to_string(curPoints.size()));
+
+
+
+
+    //curPoints[curPoints.size()-1] = cursorPos;
+
+    // Draw
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+
+  
+    // Draw polygons
+    for (const auto& polygon : polygons) {
+        int n = polygon.size();
+        for (int i = 0; i < n; i++) {
+            DrawLineV(polygon[i], polygon[(i + 1) % n], BLACK);
+        }
+    }
+
+    // Debug Draw: Anchor, OldPos, Cursor
+    DebugDrawPoint(curPoints[curPoints.size()-2], RED, "Anchor");
+    DebugDrawPoint(oldPos, ORANGE, "OldPos");
+    DebugDrawPoint(newPos, GREEN, "newPos");
+
+
+    // Draw rope
+    for (size_t i = 1; i < curPoints.size(); i++) {
+        Color color = (i == curPoints.size() - 1) ? PURPLE : BLUE; // Highlight the last segment
+        DebugDrawVector(curPoints[i - 1], curPoints[i], color, nullptr);
+    }
+    logger.Draw();
+
+    EndDrawing();
+}
+
 
     CloseWindow();
     return 0;
