@@ -138,8 +138,8 @@ std::unordered_set<Vector2> Unwrap(std::vector<Vector2>& curPoints, std::vector<
 
         Vector2 preAnchorLine = (newPoints[newPoints.size() - 1]- newPoints[newPoints.size() - 2]);
 
-        float angleToOld= HighPrecisionSignedAngle(preAnchorLine, anchorToOld);
-        float angleToStop =  HighPrecisionSignedAngle(preAnchorLine, anchorToStop);
+        float angleToOld= Vector2Angle(preAnchorLine, anchorToOld);
+        float angleToStop =  Vector2Angle(preAnchorLine, anchorToStop);
         float product = angleToOld*angleToStop;
        // logger.AddLog("AngleToOld: "+ to_string(angleToOld),true);
         //logger.AddLog("AngleToStop: "+ to_string(angleToStop),true);
@@ -230,12 +230,29 @@ polygons.push_back(circle);
 
 while (!WindowShouldClose()) {
     logger.ClearEphemeralLogs();
+
+
+    if(IsKeyPressed(KEY_R)){
+        curPoints={ {(float)screenWidth / 2, (float)screenHeight / 2}, {(float)screenWidth / 2, (float)screenHeight / 2}};
+    }
     // Process the rope
      if (true||IsKeyPressed(KEY_SPACE)) {
             //logger.AddLog("Space key pressed!");  
             oldPos = curPoints.back();
-            anchor = curPoints[curPoints.size() - 2];    
-            newPos = GetMousePosition();
+            anchor = curPoints[curPoints.size() - 2];  
+            bool inPoly=false;
+            for(auto polygon:polygons){
+                if(IsPointInPolygon(GetMousePosition(),polygon,true)){
+                    inPoly=true;
+                    break;
+                }
+            }  
+            if(inPoly){
+                 newPos = oldPos;
+            }else{
+                newPos=GetMousePosition();
+            }
+           
 
             curPoints[curPoints.size()-1]=newPos;
 
