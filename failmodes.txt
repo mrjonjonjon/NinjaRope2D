@@ -1,3 +1,5 @@
 Can't wrap more than one point per update
 
 Todo: fix hacky +0.01f(old->new)
+
+cant deal with parallel unwrappings
