@@ -100,11 +100,24 @@ std::optional<Vector2> TriangleSweep(
 
             // Check if the point is inside the triangle
             if (IsPointInPolygon(point, triangle,edge)) {
-                Vector2 anchorToPoint = {point.x - anchor.x, point.y - anchor.y};
+                    Vector2 anchorToPoint = (Vector2){point.x - anchor.x, point.y - anchor.y};
+                    Vector2 anchorToOld = (Vector2){oldPos.x - anchor.x, oldPos.y - anchor.y};
 
-                // Compute angle from old vector to the current point
-                float angleFromOldToNew = Vector2Angle(anchorToOld, anchorToPoint);
+                    // Compute angle from old vector to the current point
+                    float angleFromOldToNew = fabs(Vector2Angle(anchorToOld, anchorToPoint)); // Use fabs for absolute value
+                    printf("===START====\n");
 
+                    if (Vector2Angle(anchorToOld, anchorToPoint) > 0) {
+                        printf("POS\n");
+                    } else {
+                        // Debugging output for vectors
+                        printf("anchorToOld: {%.2f, %.2f}\n", anchorToOld.x, anchorToOld.y);
+                        printf("anchorToPoint: {%.2f, %.2f}\n", anchorToPoint.x, anchorToPoint.y);
+                        printf("NEG\n");
+                    }
+
+
+                //printf(Vector2Angle(anchorToOld, anchorToPoint));
                 // Calculate distance from anchor to the point
                 float distance = std::sqrt(std::pow(point.x - anchor.x, 2) + std::pow(point.y - anchor.y, 2));
 

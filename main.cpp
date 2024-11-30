@@ -216,7 +216,7 @@ int main() {
 while (!WindowShouldClose()) {
     logger.ClearEphemeralLogs();
     // Process the rope
-     if (false||IsKeyPressed(KEY_SPACE)) {
+     if (true||IsKeyPressed(KEY_SPACE)) {
             //logger.AddLog("Space key pressed!");  
             oldPos = curPoints.back();
             anchor = curPoints[curPoints.size() - 2];    
