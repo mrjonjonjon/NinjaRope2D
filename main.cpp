@@ -191,7 +191,19 @@ float dist(Vector2 v1,Vector2 v2){
 }
 
 
-
+std::vector<Vector2> generateCircle(float centerX, float centerY, float radius, int numSegments) {
+    std::vector<Vector2> circleVertices;
+    
+    for (int i = 0; i < numSegments; ++i) {
+        float angle = (i * 2.0f * M_PI) / numSegments;  // Angle for each segment
+        float x = centerX + radius * cos(angle);
+        float y = centerY + radius * sin(angle);
+        
+        circleVertices.push_back({x, y});
+    }
+    
+    return circleVertices;
+}
 
 int main() {
     //Logger logger(10, {10, 10}, 20, 5, BLACK);
@@ -208,6 +220,9 @@ int main() {
         {{200.0f, 150.0f}, {300.0f, 100.0f}, {400.0f, 150.0f}, {350.0f, 250.0f}, {250.0f, 250.0f}},
         {{500.0f, 300.0f}, {600.0f, 350.0f}, {550.0f, 450.0f}, {450.0f, 400.0f}}
     };
+
+    std::vector<Vector2> circle = generateCircle(150.0f, 350.0f, 100.0f, 36);
+polygons.push_back(circle);
 
     SetTargetFPS(60);
     Vector2 cursorPos;
